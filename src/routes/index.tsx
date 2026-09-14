@@ -1,208 +1,795 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowRight, Instagram, MapPin, MessageCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import logoAsset from "@/assets/712544399_17867221623685031_5817965705577672871_n.jpg.asset.json";
-import facadeAsset from "@/assets/WhatsApp_Image_2026-09-14_at_15.46.27.jpeg.asset.json";
-import whiteLookAsset from "@/assets/WhatsApp_Image_2026-09-14_at_15.20.05.jpeg.asset.json";
-import denimLookAsset from "@/assets/WhatsApp_Image_2026-09-11_at_09.22.10.jpeg.asset.json";
-import blouseAsset from "@/assets/WhatsApp_Image_2026-09-04_at_16.52.18.jpeg.asset.json";
-import mensAsset from "@/assets/WhatsApp_Image_2026-09-10_at_10.54.26.jpeg.asset.json";
-import shoesAsset from "@/assets/WhatsApp_Image_2026-09-01_at_08.36.12.jpeg.asset.json";
-import testimonialOneAsset from "@/assets/WhatsApp_Image_2026-09-14_at_15.56.16.jpeg.asset.json";
-import testimonialTwoAsset from "@/assets/WhatsApp_Image_2026-09-14_at_15.59.56.jpeg.asset.json";
+import { useEffect, useRef, useState } from "react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  Coffee,
+  Heart,
+  Instagram,
+  MapPin,
+  Menu,
+  MessageCircle,
+  Play,
+  Plus,
+  X,
+} from "lucide-react";
+import {
+  Action,
+  AmbientVideo,
+  LookDialog,
+  MotionControl,
+  Photo,
+  Spark,
+  Wordmark,
+  type Selection,
+} from "@/components/emege-experience";
+import { collections, conditionalSteps, films, store, delay } from "@/lib/emege";
 
-const whatsapp = (message: string) =>
-  `https://wa.me/5546999302444?text=${encodeURIComponent(message)}`;
+import { useExperienceMotion } from "@/hooks/use-emege-motion";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Eme gê modas | Moda e beleza em Espigão Alto" },
-      { name: "description", content: "Descubra moda, calçados, joias e beleza na Eme gê modas. Ganhe 20% OFF na primeira compra e fale conosco pelo WhatsApp." },
-      { property: "og:title", content: "Eme gê modas | Vista quem você é" },
-      { property: "og:description", content: "Elegância, acolhimento e estilo em Espigão Alto do Iguaçu. 20% OFF na primeira compra." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { title: "Eme gê modas | Vista quem você é" },
+      {
+        name: "description",
+        content:
+          "Moda feminina, masculina, infantil, calçados, joias e beleza em Espigão Alto do Iguaçu. Descubra a Eme gê e aproveite 20% OFF na primeira compra na loja.",
+      },
+      { property: "og:title", content: "Eme gê modas — Vista quem você é." },
+      {
+        property: "og:description",
+        content:
+          "Muitas versões. Todas suas. Conheça os looks, descubra os detalhes e encontre seu estilo na Eme gê modas.",
+      },
+      { property: "og:locale", content: "pt_BR" },
     ],
   }),
   component: Index,
 });
 
-function Reveal({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`reveal ${className}`}>{children}</div>;
-}
-
 function Index() {
-  const [progress, setProgress] = useState(0);
+  // Start without autoplay until motion and data-saving preferences are known.
+  const [paused, setPaused] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [category, setCategory] = useState(0);
+  const [selection, setSelection] = useState<Selection>(null);
+  const [step, setStep] = useState(0);
+  const [hoveredFilm, setHoveredFilm] = useState<number | null>(null);
+  const filmRail = useRef<HTMLDivElement>(null);
+  const collection = collections[category] ?? collections[0]!;
+  useExperienceMotion(paused);
 
   useEffect(() => {
-    const nodes = Array.from(document.querySelectorAll(".reveal"));
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => entry.isIntersecting && entry.target.classList.add("is-visible"));
-    }, { threshold: 0.12 });
-    nodes.forEach((node) => observer.observe(node));
-    const onScroll = () => {
-      const total = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(total > 0 ? (window.scrollY / total) * 100 : 0);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => { observer.disconnect(); window.removeEventListener("scroll", onScroll); };
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean } })
+      .connection;
+    setPaused(preference.matches || Boolean(connection?.saveData));
+    const update = () => setPaused(preference.matches || Boolean(connection?.saveData));
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
   }, []);
 
-  return (
-    <main className="bg-background text-foreground">
-      <div className="fixed left-0 top-0 z-[70] h-0.5 bg-gold transition-[width] duration-150" style={{ width: `${progress}%` }} />
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        document.getElementById("menu-toggle")?.focus();
+      }
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [menuOpen]);
 
-      <header className="absolute inset-x-0 top-0 z-40 flex items-center justify-between px-5 py-5 text-primary-foreground sm:px-10 lg:px-16">
-        <a href="#inicio" aria-label="Eme gê modas — início" className="flex items-center gap-3">
-          <img src={logoAsset.url} alt="Logo Eme gê modas" className="h-14 w-14 rounded-full border border-primary-foreground/30 object-cover shadow-editorial" />
+  const selectCategory = (index: number) => {
+    setCategory(index);
+    document
+      .getElementById("colecoes")
+      ?.scrollIntoView({ behavior: paused ? "instant" : "smooth", block: "start" });
+  };
+  const moveFilms = (direction: number) =>
+    filmRail.current?.scrollBy({
+      left: direction * filmRail.current.clientWidth * 0.72,
+      behavior: paused ? "instant" : "smooth",
+    });
+
+  return (
+    <div className={`emege-site${paused ? " motion-paused" : ""}`}>
+      <a className="skip-link" href="#conteudo">
+        Ir para o conteúdo
+      </a>
+      <div className="reading-progress" aria-hidden="true" />
+      <div className="announcement">
+        <span>Um convite para se descobrir.</span>
+        <a href="#seu-presente">
+          20% OFF na sua primeira compra <ArrowUpRight size={13} />
         </a>
-        <a href="#visite" className="hidden text-[0.67rem] font-medium tracking-[0.2em] story-link sm:block">ESPIGÃO ALTO DO IGUAÇU · PR</a>
+        <span>ESPIGÃO ALTO DO IGUAÇU · PR</span>
+      </div>
+      <header className="site-header">
+        <a
+          href="#inicio"
+          className="brand"
+          aria-label="Eme gê modas — início"
+          onClick={() => setMenuOpen(false)}
+        >
+          <Wordmark />
+        </a>
+        <nav className="desktop-nav" aria-label="Navegação principal">
+          <a href="#colecoes">Nossas coleções</a>
+          <a href="#em-movimento">Em movimento</a>
+          <a href="#experiencia">O jeito Eme gê</a>
+          <a href="#visite">Visite a loja</a>
+        </nav>
+        <div className="header-actions">
+          <a
+            className="header-contact"
+            href={store.hello}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Vamos conversar <ArrowUpRight size={17} />
+          </a>
+          <button
+            id="menu-toggle"
+            type="button"
+            className="menu-toggle circle-button"
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-navigation"
+            onClick={() => setMenuOpen((value) => !value)}
+          >
+            {menuOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+        <nav
+          id="mobile-navigation"
+          className="mobile-navigation"
+          hidden={!menuOpen}
+          aria-label="Navegação no celular"
+        >
+          <a href="#colecoes" onClick={() => setMenuOpen(false)}>
+            Nossas coleções <ArrowUpRight />
+          </a>
+          <a href="#em-movimento" onClick={() => setMenuOpen(false)}>
+            Em movimento <ArrowUpRight />
+          </a>
+          <a href="#experiencia" onClick={() => setMenuOpen(false)}>
+            O jeito Eme gê <ArrowUpRight />
+          </a>
+          <a href="#visite" onClick={() => setMenuOpen(false)}>
+            Visite a loja <ArrowUpRight />
+          </a>
+          <a
+            href={store.hello}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMenuOpen(false)}
+          >
+            Falar pelo WhatsApp <MessageCircle />
+          </a>
+        </nav>
       </header>
 
-      <section id="inicio" className="relative min-h-[94svh] overflow-hidden bg-wine text-primary-foreground">
-        <img src={whiteLookAsset.url} alt="Look feminino branco da Eme gê modas" className="hero-image absolute inset-0 h-full w-full object-cover object-[52%_35%] opacity-80" />
-        <div className="absolute inset-0 bg-gradient-to-r from-wine/90 via-wine/45 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-wine/80 via-transparent to-wine/20" />
-        <div className="relative z-10 mx-auto flex min-h-[94svh] max-w-[1480px] flex-col justify-end px-5 pb-14 pt-28 sm:px-10 lg:px-16 lg:pb-20">
-          <p className="mb-5 text-[0.65rem] font-medium tracking-[0.28em] text-primary-foreground/80">MODA · BELEZA · DESCOBERTA</p>
-          <h1 className="max-w-4xl font-display text-[clamp(3rem,7.5vw,7.8rem)] leading-[0.92]">
-            <span className="hero-word block">Vista quem você é.</span>
-            <span className="hero-word block italic text-blush-soft">Descubra quem pode ser.</span>
-          </h1>
-          <div className="mt-7 flex max-w-3xl flex-col gap-6 border-t border-primary-foreground/25 pt-6 lg:flex-row lg:items-end lg:justify-between">
-            <p className="max-w-xl text-sm font-light leading-relaxed text-primary-foreground/85 sm:text-base">Moda, beleza e estilo para você se sentir ainda mais você — com qualidade, elegância e preços que fazem sentido.</p>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button asChild variant="cream" size="editorial"><a href="#visite">QUERO CONHECER <ArrowDown /></a></Button>
-              <Button asChild variant="editorialOutline" size="editorial"><a href={whatsapp("Olá! Conheci a Eme gê pela landing page e quero saber mais.")} target="_blank" rel="noreferrer">FALAR NO WHATSAPP</a></Button>
+      <main id="conteudo">
+        <section id="inicio" className="hero">
+          <div className="hero-copy">
+            <p className="eyebrow hero-entrance">
+              <span className="small-line" /> MODA, BELEZA & MUITO DE VOCÊ
+            </p>
+            <h1 className="hero-entrance">
+              Vista quem
+              <br />
+              <em>você é.</em>
+              <Spark className="hero-spark" />
+            </h1>
+            <p className="hero-description hero-entrance">
+              E descubra tudo o que pode ser.
+              <br />
+              Looks que encantam. Detalhes que surpreendem.
+              <br className="desktop-break" /> Um lugar para se sentir bem.
+            </p>
+            <div className="hero-actions hero-entrance">
+              <Action href="#colecoes" external={false}>
+                Encontre seu próximo look
+              </Action>
+              <a className="text-link" href={store.hello} target="_blank" rel="noopener noreferrer">
+                Converse com a gente <ArrowUpRight size={16} />
+              </a>
+            </div>
+            <a href="#seu-presente" className="hero-gift hero-entrance">
+              <span className="gift-number">
+                20<span>%</span>
+              </span>
+              <span>
+                <strong>Um presente de boas-vindas.</strong>
+                <small>OFF na sua primeira compra na loja.</small>
+              </span>
+              <ArrowUpRight size={19} />
+            </a>
+          </div>
+          <div className="hero-visual">
+            <div className="hero-image-frame">
+              <AmbientVideo
+                name="chocolate-em-cena"
+                poster="feminino-chocolate"
+                alt="Look em tom chocolate com acessórios dourados da Eme gê"
+                enabled={!paused && !selection}
+                priority
+              />
+              <div className="hero-image-caption">
+                <span>O ESTILO É SEU.</span>
+                <span>A DESCOBERTA É AQUI.</span>
+              </div>
+            </div>
+            <div className="hero-detail">
+              <Photo
+                name="jeans-detalhe"
+                alt="Detalhe de jeans com lenço verde e acessórios"
+                priority
+                sizes="180px"
+              />
+              <span>É sobre os detalhes.</span>
+            </div>
+            <div className="hero-seal" aria-hidden="true">
+              <svg className="seal-ring" viewBox="0 0 120 120">
+                <defs>
+                  <path id="seal-circle" d="M60,60 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0" />
+                </defs>
+                <text>
+                  <textPath href="#seal-circle" textLength="280">
+                    VISTA QUEM VOCÊ É • EME GÊ MODAS •{" "}
+                  </textPath>
+                </text>
+              </svg>
+              <Spark />
+            </div>
+            <span className="hero-side-note" aria-hidden="true">
+              EME GÊ / UMA NOVA DESCOBERTA
+            </span>
+          </div>
+          <div className="hero-bottom">
+            <a href="#colecoes">
+              CONTINUE A DESCOBERTA <ArrowDown size={15} />
+            </a>
+            <MotionControl paused={paused} onToggle={() => setPaused((value) => !value)} />
+          </div>
+        </section>
+
+        <div className="style-ticker" aria-hidden="true">
+          <div className="ticker-track">
+            {[0, 1].map((i) => (
+              <div className="ticker-group" key={i}>
+                <span>Seu estilo.</span>
+                <Spark />
+                <span>Seu momento.</span>
+                <Spark />
+                <span>Seu jeito de ser.</span>
+                <Spark />
+                <span>Sua Eme gê.</span>
+                <Spark />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <section id="colecoes" className="collections section-space">
+          <div className="section-heading container" data-reveal>
+            <div>
+              <p className="eyebrow">01 / ESCOLHA A SUA DESCOBERTA</p>
+              <h2>
+                Um universo.
+                <br />
+                <em>Todo seu.</em>
+              </h2>
+            </div>
+            <p>
+              Para você, para os pequenos,
+              <br />
+              para quem faz parte da sua vida.
+              <br />
+              <strong>Deixe o seu olhar escolher.</strong>
+            </p>
+          </div>
+          <div className="collection-tabs container" role="group" aria-label="Filtrar coleção">
+            {collections.map((item, index) => (
+              <button
+                type="button"
+                key={item.id}
+                aria-pressed={category === index}
+                aria-controls="collection-panel"
+                onClick={() => setCategory(index)}
+              >
+                <span>{item.label}</span>
+                <span className="tab-number">0{index + 1}</span>
+              </button>
+            ))}
+          </div>
+          <div id="collection-panel" className="container collection-panel" key={collection.id}>
+            <div className="collection-intro">
+              <h3>{collection.headline}</h3>
+              <p>{collection.description}</p>
+            </div>
+            <div className="look-grid">
+              {collection.looks.map((look, index) => (
+                <button
+                  type="button"
+                  key={look.id}
+                  className="look-card"
+                  aria-label={`Ver ${look.name}`}
+                  onClick={() => setSelection({ looks: collection.looks, index })}
+                  style={delay(index * 80)}
+                >
+                  <div className="look-image">
+                    <Photo
+                      name={look.image}
+                      alt={look.name}
+                      position={look.position}
+                      sizes="(max-width: 700px) 47vw, 25vw"
+                    />
+                    <span className="look-index">0{index + 1}</span>
+                    {look.video && (
+                      <span className="video-label">
+                        <Play size={11} fill="currentColor" /> COM VÍDEO
+                      </span>
+                    )}
+                    <span className="look-expand">
+                      <Plus size={20} />
+                    </span>
+                  </div>
+                  <div className="look-caption">
+                    <div>
+                      <span>{look.category}</span>
+                      <h4>{look.name}</h4>
+                    </div>
+                    <ArrowUpRight size={19} />
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="collection-bottom">
+              <span>{collection.brands}</span>
+              <a className="text-link" href={store.hello} target="_blank" rel="noopener noreferrer">
+                Vamos encontrar o seu? <ArrowUpRight size={16} />
+              </a>
             </div>
           </div>
-          <div className="mt-7 flex max-w-3xl items-center gap-4 border-l border-gold pl-4">
-            <strong className="font-display text-3xl font-normal text-blush-soft sm:text-4xl">20% OFF</strong>
-            <p className="max-w-sm text-xs leading-relaxed text-primary-foreground/80"><span className="font-semibold text-primary-foreground">na primeira compra.</span> Na loja, diga que conheceu a Eme gê por esta página.</p>
+          <div className="beauty-note container">
+            <Spark />
+            <p>
+              E o toque final? <strong>Beleza que acompanha você.</strong>
+            </p>
+            <span>Quem Disse, Berenice? · Eudora · O.U.I.</span>
+            <a
+              href={store.hello}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Consultar produtos de beleza"
+            >
+              <ArrowUpRight />
+            </a>
           </div>
-          <div className="absolute bottom-4 right-7 hidden items-center gap-3 text-[0.58rem] tracking-[0.2em] lg:flex"><span>DESCUBRA</span><span className="scroll-line h-10 w-px bg-primary-foreground/70" /></div>
-        </div>
-      </section>
+        </section>
 
-      <section className="flex min-h-[45vh] items-center justify-center px-6 py-28 text-center">
-        <Reveal><p className="font-display text-[clamp(2.2rem,5vw,5rem)] italic leading-tight text-primary">“Porque se amar é<br />o seu melhor look.”</p></Reveal>
-      </section>
-
-      <section className="overflow-hidden bg-cream py-24 lg:py-36">
-        <div className="mx-auto grid max-w-[1380px] gap-14 px-5 sm:px-10 lg:grid-cols-12 lg:px-16">
-          <Reveal className="lg:col-span-5 lg:pt-20">
-            <p className="mb-4 text-[0.65rem] tracking-[0.22em] text-primary">A EXPERIÊNCIA EME GÊ</p>
-            <h2 className="font-display text-5xl leading-[1.02] sm:text-6xl">Você não precisa saber exatamente o que procura.</h2>
-            <p className="mt-7 max-w-md text-base font-light leading-8 text-muted-foreground">Às vezes você chega procurando uma peça. E sai encontrando um look, uma ideia, uma descoberta — e uma versão de você que ainda não tinha imaginado.</p>
-          </Reveal>
-          <div className="grid grid-cols-7 gap-3 lg:col-span-7 lg:gap-5">
-            <Reveal className="editorial-image col-span-4 aspect-[3/5]"><img src={denimLookAsset.url} alt="Cliente experimentando look feminino na Eme gê" loading="lazy" /></Reveal>
-            <div className="col-span-3 flex flex-col gap-3 pt-16 lg:gap-5 lg:pt-28">
-              <Reveal className="editorial-image aspect-[3/4]"><img src={blouseAsset.url} alt="Blusinha feminina em destaque na Eme gê" loading="lazy" /></Reveal>
-              <Reveal><p className="border-l border-gold pl-4 font-display text-xl italic leading-snug">Um provador gostoso.<br />Um atendimento que escuta.<br />Um café que acolhe.</p></Reveal>
+        <section id="em-movimento" className="motion-section section-space">
+          <div className="container section-heading" data-reveal>
+            <div>
+              <p className="eyebrow">02 / DÊ PLAY NO SEU PRÓXIMO LOOK</p>
+              <h2>
+                Moda que <em>se move.</em>
+                <br />
+                Com você.
+              </h2>
+            </div>
+            <div className="film-heading-aside">
+              <p>
+                O caimento. O brilho. O movimento.
+                <br />
+                Tem coisa que você precisa ver de perto.
+              </p>
+              <div className="rail-buttons">
+                <button
+                  type="button"
+                  className="circle-button"
+                  aria-label="Vídeos anteriores"
+                  onClick={() => moveFilms(-1)}
+                >
+                  <ArrowLeft />
+                </button>
+                <button
+                  type="button"
+                  className="circle-button"
+                  aria-label="Próximos vídeos"
+                  onClick={() => moveFilms(1)}
+                >
+                  <ArrowRight />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="bg-wine py-24 text-primary-foreground lg:py-36">
-        <div className="mx-auto grid max-w-[1380px] items-center gap-12 px-5 sm:px-10 lg:grid-cols-2 lg:px-16">
-          <Reveal className="editorial-image aspect-[4/5] max-h-[760px]"><img src={facadeAsset.url} alt="Fachada da loja Eme gê modas em Espigão Alto do Iguaçu" loading="lazy" /></Reveal>
-          <Reveal className="lg:pl-14">
-            <p className="mb-4 text-[0.65rem] tracking-[0.22em] text-blush-soft">ENTRE. RESPIRE. FIQUE À VONTADE.</p>
-            <h2 className="font-display text-5xl leading-none sm:text-7xl">Aqui, você é mais do que uma cliente.</h2>
-            <p className="mt-8 max-w-xl text-base font-light leading-8 text-primary-foreground/75">A Eme gê nasceu para fazer cada pessoa se sentir bem ao entrar pela porta. Nossa missão é ajudar você a encontrar aquilo que combina com seu estilo, seu momento e com a pessoa que você é.</p>
-            <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-primary-foreground/20 pt-7 text-xs tracking-[0.1em] text-primary-foreground/80"><span>ILUMINAÇÃO QUENTE</span><span>PROVADOR AGRADÁVEL</span><span>ATENDIMENTO RECEPTIVO</span><span>CAFÉ E BOLACHINHA</span><span>AMBIENTE CLIMATIZADO</span><span>ORGANIZAÇÃO E CUIDADO</span></div>
-          </Reveal>
-        </div>
-      </section>
-
-      <section className="py-24 lg:py-36">
-        <div className="mx-auto max-w-[1380px] px-5 sm:px-10 lg:px-16">
-          <Reveal className="max-w-4xl"><p className="mb-4 text-[0.65rem] tracking-[0.22em] text-primary">O UNIVERSO EME GÊ</p><h2 className="font-display text-5xl leading-none sm:text-7xl">Um universo de estilo para você e para quem você ama.</h2></Reveal>
-          <div className="mt-16 grid auto-rows-[180px] grid-cols-2 gap-3 md:auto-rows-[250px] md:grid-cols-4 lg:gap-5">
-            <Reveal className="editorial-image relative col-span-2 row-span-2"><img src={whiteLookAsset.url} alt="Moda feminina Eme gê" loading="lazy" /><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-wine/85 to-transparent p-6 pt-24 text-primary-foreground"><p className="text-xs tracking-[0.2em]">FEMININO</p><p className="mt-2 text-xs text-primary-foreground/70">Zee Rucci · Bruna e Bia · Cativa · Pink Lu</p></div></Reveal>
-            <Reveal className="relative col-span-2 overflow-hidden bg-blush-soft p-7 md:row-span-1"><p className="text-xs tracking-[0.2em] text-primary">INFANTIL</p><h3 className="mt-4 max-w-xs font-display text-3xl">Pequenos estilos, grandes descobertas.</h3><p className="mt-4 text-xs text-muted-foreground">RalaKids · Trajadinhos · entre outras</p></Reveal>
-            <Reveal className="editorial-image relative"><img src={mensAsset.url} alt="Moda masculina Eme gê" loading="lazy" /><p className="absolute bottom-4 left-4 text-xs tracking-[0.18em] text-primary-foreground drop-shadow">MASCULINO</p></Reveal>
-            <Reveal className="editorial-image relative"><img src={shoesAsset.url} alt="Calçados Eme gê" loading="lazy" /><p className="absolute bottom-4 left-4 text-xs tracking-[0.18em] text-primary-foreground drop-shadow">CALÇADOS</p></Reveal>
-            <Reveal className="col-span-2 flex items-center justify-between border-y border-border px-5"><div><p className="text-xs tracking-[0.18em]">JOIAS & SEMIJOIAS</p><p className="mt-2 text-sm text-muted-foreground">Aleska</p></div><div className="text-right"><p className="text-xs tracking-[0.18em]">BELEZA</p><p className="mt-2 text-sm text-muted-foreground">Quem Disse Berenice? · Eudora · O.U.I.</p></div></Reveal>
+          <div className="film-rail" ref={filmRail} aria-label="Looks em vídeo">
+            {films.map((film, index) => (
+              <button
+                type="button"
+                className="film-card"
+                key={film.id}
+                onClick={() => setSelection({ looks: films, index, film: true })}
+                onPointerEnter={() => setHoveredFilm(index)}
+                onPointerLeave={() => setHoveredFilm(null)}
+                onFocus={() => setHoveredFilm(index)}
+                onBlur={() => setHoveredFilm(null)}
+                aria-label={`Assistir ${film.name}`}
+              >
+                <AmbientVideo
+                  name={film.video!}
+                  poster={film.image}
+                  alt={film.name}
+                  enabled={
+                    !paused &&
+                    !selection &&
+                    (hoveredFilm === index || (hoveredFilm === null && index === 0))
+                  }
+                />
+                <span className="film-top">
+                  <span>EME GÊ EM CENA</span>
+                  <span>0{index + 1}</span>
+                </span>
+                <span className="film-play">
+                  <Play size={22} fill="currentColor" />
+                </span>
+                <span className="film-caption">
+                  <small>{film.category}</small>
+                  <strong>{film.name}</strong>
+                  <span>
+                    VER O LOOK <ArrowUpRight size={14} />
+                  </span>
+                </span>
+              </button>
+            ))}
           </div>
-        </div>
-      </section>
-
-      <section className="overflow-hidden bg-blush-soft py-24 lg:py-36">
-        <div className="mx-auto grid max-w-[1380px] gap-10 px-5 sm:px-10 lg:grid-cols-12 lg:px-16">
-          <Reveal className="lg:col-span-5 lg:sticky lg:top-24 lg:self-start"><p className="mb-4 text-[0.65rem] tracking-[0.22em] text-primary">FEMININO</p><h2 className="font-display text-6xl leading-[0.95] sm:text-8xl">Seu estilo começa aqui.</h2><p className="mt-8 font-display text-2xl italic text-primary">Qualidade que você sente.<br />Elegância que você veste.</p></Reveal>
-          <div className="grid grid-cols-2 gap-4 lg:col-span-7">
-            <Reveal className="editorial-image col-span-2 aspect-[4/3]"><img src={denimLookAsset.url} alt="Look feminino com blusa e jeans" loading="lazy" /></Reveal>
-            <Reveal className="editorial-image aspect-[3/4]"><img src={blouseAsset.url} alt="Blusinha feminina clara" loading="lazy" /></Reveal>
-            <Reveal className="editorial-image mt-12 aspect-[3/4]"><img src={whiteLookAsset.url} alt="Conjunto feminino branco" loading="lazy" /></Reveal>
+          <div className="container film-bottom">
+            <span>Looks reais. Detalhes de verdade.</span>
+            <span>
+              TOQUE PARA VER MAIS <ArrowUpRight size={14} />
+            </span>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="bg-primary py-20 text-primary-foreground lg:py-28">
-        <Reveal className="mx-auto flex max-w-[1200px] flex-col items-center px-5 text-center sm:px-10">
-          <p className="text-[0.65rem] tracking-[0.24em] text-blush-soft">ELEGÂNCIA POSSÍVEL</p>
-          <h2 className="mt-5 font-display text-4xl sm:text-6xl">Elegância não precisa ser inacessível.</h2>
-          <p className="mt-10 border-y border-primary-foreground/25 py-7 font-display text-[clamp(3.2rem,8vw,7rem)] leading-none">Looks a partir de <span className="text-blush-soft">R$ 59,90</span></p>
-          <p className="mt-7 max-w-2xl text-sm font-light leading-7 text-primary-foreground/80">Peças selecionadas, diferentes estilos e uma curadoria pensada para oferecer qualidade e custo-benefício — sem abrir mão da elegância.</p>
-        </Reveal>
-      </section>
-
-      <section className="py-24 lg:py-36">
-        <div className="mx-auto max-w-[1280px] px-5 sm:px-10 lg:px-16">
-          <Reveal className="text-center"><p className="text-[0.65rem] tracking-[0.22em] text-primary">PALAVRAS REAIS</p><h2 className="mt-4 font-display text-5xl sm:text-7xl">Qualidade que faz você voltar.</h2></Reveal>
-          <div className="mt-14 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <Reveal className="lg:pr-12"><blockquote className="font-display text-3xl leading-snug sm:text-4xl">“Adoro ser atendida por você. Muito sucesso nessa jornada de vocês.”</blockquote><p className="mt-6 text-xs tracking-[0.18em] text-muted-foreground">MENSAGEM REAL DE CLIENTE · WHATSAPP</p></Reveal>
-            <div className="grid grid-cols-2 gap-3"><Reveal className="editorial-image aspect-[9/16] shadow-editorial"><img src={testimonialOneAsset.url} alt="Depoimento real de cliente sobre o atendimento da Eme gê" loading="lazy" /></Reveal><Reveal className="editorial-image mt-10 aspect-[9/16] shadow-editorial"><img src={testimonialTwoAsset.url} alt="Depoimento real de cliente sobre look da Eme gê" loading="lazy" /></Reveal></div>
+        <section className="detail-story section-space">
+          <div className="container detail-layout">
+            <div className="detail-composition" data-reveal>
+              <div className="detail-main">
+                <Photo
+                  name="joias-colar"
+                  alt="Detalhes de colar e pulseiras da Eme gê"
+                  sizes="(max-width: 700px) 80vw, 40vw"
+                />
+              </div>
+              <div className="detail-small">
+                <Photo name="rasteira-caramelo" alt="Rasteiras caramelo com laço" sizes="240px" />
+              </div>
+              <span className="detail-script">Um toque de você.</span>
+              <Spark className="detail-spark" />
+            </div>
+            <div className="detail-copy" data-reveal>
+              <p className="eyebrow">03 / NADA AQUI É SÓ UM DETALHE</p>
+              <h2>
+                O look muda.
+                <br />
+                <em>
+                  A essência
+                  <br />é sua.
+                </em>
+              </h2>
+              <p>
+                A peça que veste bem. O sapato que fecha a combinação. O acessório que parece ter
+                sido feito para você.
+              </p>
+              <p>
+                Na Eme gê, cada escolha abre uma possibilidade. E a gente está aqui para descobrir a
+                sua, junto com você.
+              </p>
+              <button type="button" className="text-link" onClick={() => selectCategory(4)}>
+                Descubra os detalhes <ArrowUpRight size={17} />
+              </button>
+              <div className="detail-price">
+                <span>ESTILO QUE CABE NA VIDA REAL</span>
+                <p>
+                  Peças a partir de <strong>R$ 59,90</strong>
+                </p>
+                <small>Consulte modelos e disponibilidade com a equipe.</small>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="bg-cream py-24 lg:py-36">
-        <div className="mx-auto max-w-[1250px] px-5 sm:px-10 lg:px-16">
-          <Reveal className="max-w-3xl"><p className="text-[0.65rem] tracking-[0.22em] text-primary">O CONDICIONAL EME GÊ</p><h2 className="mt-4 font-display text-5xl leading-none sm:text-7xl">E se o seu provador pudesse ser a sua casa?</h2></Reveal>
-          <div className="mt-16 grid gap-px bg-border md:grid-cols-4">
-            {["Escolha", "Leve", "Experimente", "Fique com o que ama"].map((step, index) => <Reveal key={step} className="group bg-cream p-7 transition-colors hover:bg-blush-soft"><span className="font-display text-4xl text-gold">0{index + 1}</span><h3 className="mt-12 font-display text-2xl">{step}</h3><ArrowRight className="mt-5 text-primary transition-transform group-hover:translate-x-2" /></Reveal>)}
+        <section id="experiencia" className="store-story section-space">
+          <div className="container store-layout">
+            <div className="store-copy" data-reveal>
+              <p className="eyebrow">04 / O JEITO EME GÊ</p>
+              <h2>
+                Entre pelo look.
+                <br />
+                Fique pelo
+                <br />
+                <em>acolhimento.</em>
+              </h2>
+              <p>
+                Você não precisa chegar sabendo o que procura. Pode vir para olhar, experimentar,
+                conversar. O café e a atenção já fazem parte da experiência.
+              </p>
+              <div className="store-features">
+                <span>
+                  <Coffee size={19} /> Café e bolachinha
+                </span>
+                <span>
+                  <Heart size={19} /> Atendimento que escuta
+                </span>
+                <span>
+                  <Check size={19} /> Provador agradável
+                </span>
+                <span>
+                  <Check size={19} /> Ambiente climatizado
+                </span>
+              </div>
+              <a className="text-link" href="#visite">
+                Faça uma visita <ArrowUpRight size={17} />
+              </a>
+            </div>
+            <div className="store-photo" data-reveal>
+              <Photo
+                name="fachada"
+                alt="Fachada real da Eme gê modas na Avenida Brasília, em Espigão Alto do Iguaçu"
+                sizes="(max-width: 700px) 100vw, 50vw"
+              />
+              <div className="store-photo-label">
+                <span>UM LUGAR PARA CHAMAR DE SEU.</span>
+                <MapPin size={18} />
+              </div>
+              <span className="store-tag">
+                Pode entrar.
+                <br />
+                <em>A casa é sua.</em>
+              </span>
+            </div>
           </div>
-          <Reveal><p className="mt-8 max-w-3xl text-sm leading-7 text-muted-foreground">Para clientes que possuem crediário Eme gê, existe a possibilidade de levar peças para casa, experimentar com calma e devolver aquilo que não vai ficar, pagando apenas pelo que escolheu.</p></Reveal>
+          <div className="container store-history" data-reveal>
+            <div>
+              <span className="history-year">
+                2026<span>UM NOVO CAPÍTULO.</span>
+              </span>
+            </div>
+            <div>
+              <h3>
+                Uma nova loja.
+                <br />
+                Uma confiança de muitos anos.
+              </h3>
+              <p>
+                Depois de anos de relações e amizade no comércio da cidade, mãe e filha deram vida a
+                um espaço próprio. Em março de 2026, a Eme gê abriu as portas: uma loja renovada,
+                feita para Espigão Alto do Iguaçu e toda a região.
+              </p>
+            </div>
+            <blockquote>
+              <span aria-hidden="true">“</span>
+              <p>Adoro ser atendida por você. Muito sucesso nessa jornada de vocês.</p>
+              <cite>MENSAGEM DE CLIENTE · WHATSAPP</cite>
+            </blockquote>
+          </div>
+        </section>
+
+        <section className="conditional section-space">
+          <div className="container conditional-layout">
+            <div data-reveal>
+              <p className="eyebrow">05 / NO SEU TEMPO, DO SEU JEITO</p>
+              <h2>
+                Seu provador.
+                <br />
+                <em>Seu endereço.</em>
+              </h2>
+              <p className="conditional-intro">
+                Experimente com calma, combine com o que já ama e escolha no conforto da sua casa.
+              </p>
+              <div className="conditional-note">
+                <span>O CONDICIONAL EME GÊ</span>
+                <p>
+                  Disponível para clientes com crediário Eme gê. Combine condições e prazo com a
+                  nossa equipe.
+                </p>
+              </div>
+              <Action href={store.conditional} light>
+                Quero conhecer o condicional
+              </Action>
+            </div>
+            <div className="steps" data-reveal>
+              {conditionalSteps.map((item, index) => (
+                <div className={`step${step === index ? " step-active" : ""}`} key={item.title}>
+                  <h3>
+                    <button
+                      type="button"
+                      aria-expanded={step === index}
+                      aria-controls={`step-panel-${index}`}
+                      id={`step-button-${index}`}
+                      onClick={() => setStep(index)}
+                    >
+                      <span className="step-number">0{index + 1}</span>
+                      <span>{item.title}</span>
+                      <Plus size={20} />
+                    </button>
+                  </h3>
+                  <div
+                    id={`step-panel-${index}`}
+                    role="region"
+                    aria-labelledby={`step-button-${index}`}
+                    hidden={step !== index}
+                  >
+                    <p>{item.description}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="step-track" aria-hidden="true">
+                {conditionalSteps.map((item, index) => (
+                  <span key={item.title} className={index <= step ? "filled" : ""} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="seu-presente" className="offer-section section-space">
+          <div className="container offer-layout" data-reveal>
+            <div className="offer-visual">
+              <span className="offer-eyebrow">SEJA BEM-VINDA. SEJA BEM-VINDO.</span>
+              <div className="offer-number">
+                <span>20</span>
+                <span>
+                  <b>%</b>
+                  <small>OFF</small>
+                </span>
+              </div>
+              <div className="offer-underline">
+                <Spark />
+                <span>NA SUA PRIMEIRA COMPRA</span>
+                <Spark />
+              </div>
+            </div>
+            <div className="offer-copy">
+              <p className="eyebrow">06 / SUA PRIMEIRA DESCOBERTA</p>
+              <h2>
+                O prazer é nosso.
+                <br />
+                <em>O presente é seu.</em>
+              </h2>
+              <p>
+                Seu próximo look vem com um convite especial:{" "}
+                <strong>20% de desconto na primeira compra na loja.</strong>
+              </p>
+              <p>É só contar no atendimento que conheceu a Eme gê por esta página.</p>
+              <Action href={store.offer}>Quero aproveitar meus 20% OFF</Action>
+              <small>Válido na primeira compra na loja física.</small>
+            </div>
+          </div>
+        </section>
+
+        <section className="vip-section">
+          <div className="vip-photos" aria-hidden="true">
+            <Photo name="blusa-lilas" alt="" />
+            <Photo name="joias-dourado" alt="" />
+            <Photo name="look-rosa" alt="" />
+          </div>
+          <div className="vip-copy" data-reveal>
+            <p className="eyebrow">GRUPO VIP EME GÊ</p>
+            <h2>
+              Viu primeiro.
+              <br />
+              <em>Se apaixonou primeiro.</em>
+            </h2>
+            <p>Novidades, ofertas e achados especiais, direto no seu WhatsApp.</p>
+            <Action href={store.vip}>Quero fazer parte do VIP</Action>
+          </div>
+          <Spark className="vip-spark" />
+        </section>
+
+        <section id="visite" className="visit-section section-space">
+          <div className="container visit-heading" data-reveal>
+            <p className="eyebrow">A PRÓXIMA DESCOBERTA É PESSOALMENTE.</p>
+            <h2>
+              Seu melhor look
+              <br />
+              começa com um <em>olá.</em>
+              <Spark />
+            </h2>
+          </div>
+          <div className="container visit-grid">
+            <div className="visit-invitation" data-reveal>
+              <p>
+                Passe para um café.
+                <br />
+                Fique para se descobrir.
+              </p>
+              <a className="text-link" href={store.hello} target="_blank" rel="noopener noreferrer">
+                Mande um olá no WhatsApp <ArrowUpRight size={19} />
+              </a>
+            </div>
+            <address data-reveal>
+              <MapPin />
+              <div>
+                <span>ENCONTRE A EME GÊ</span>
+                <strong>Av. Brasília, 535 · Centro</strong>
+                <p>Espigão Alto do Iguaçu · PR</p>
+                <a
+                  className="text-link"
+                  href={store.maps}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Como chegar <ArrowUpRight size={16} />
+                </a>
+              </div>
+            </address>
+            <div className="visit-social" data-reveal>
+              <Instagram />
+              <div>
+                <span>CONTINUE A DESCOBERTA</span>
+                <strong>@emege.modas</strong>
+                <p>Inspirações para os seus dias.</p>
+                <a
+                  className="text-link"
+                  href={store.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Nos encontre no Instagram <ArrowUpRight size={16} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="site-footer">
+        <div className="container footer-top">
+          <span>MODA · CALÇADOS · JOIAS · BELEZA</span>
+          <a href="#inicio">
+            DE VOLTA AO INÍCIO <ArrowUpRight size={16} />
+          </a>
         </div>
-      </section>
-
-      <section className="bg-wine py-24 text-primary-foreground">
-        <Reveal className="mx-auto flex max-w-[1100px] flex-col items-start gap-10 px-5 sm:px-10 lg:flex-row lg:items-end lg:justify-between lg:px-16">
-          <div><p className="text-[0.65rem] tracking-[0.22em] text-blush-soft">GRUPO VIP EME GÊ</p><h2 className="mt-4 max-w-2xl font-display text-5xl leading-none sm:text-7xl">Chegue antes. Aproveite primeiro.</h2><p className="mt-6 max-w-xl text-sm font-light leading-7 text-primary-foreground/75">Receba novidades, ofertas e descontos especiais diretamente no WhatsApp.</p></div>
-          <Button asChild variant="cream" size="editorial"><a href={whatsapp("Olá! Quero entrar no Grupo VIP Eme gê e receber as novidades.")} target="_blank" rel="noreferrer">QUERO ENTRAR NO GRUPO VIP <ArrowRight /></a></Button>
-        </Reveal>
-      </section>
-
-      <section className="py-24 lg:py-40">
-        <div className="mx-auto grid max-w-[1300px] gap-14 px-5 sm:px-10 lg:grid-cols-2 lg:px-16">
-          <Reveal className="editorial-image aspect-[3/4] lg:order-2"><img src={facadeAsset.url} alt="Loja Eme gê modas, inaugurada em março de 2026" loading="lazy" /></Reveal>
-          <Reveal className="lg:pt-20"><p className="text-[0.65rem] tracking-[0.22em] text-primary">NOSSA HISTÓRIA</p><h2 className="mt-4 font-display text-5xl leading-none sm:text-7xl">Antes da Eme gê, já existia uma coisa: confiança.</h2><div className="mt-8 space-y-5 text-sm font-light leading-7 text-muted-foreground"><p>A sogra das proprietárias trabalhou durante muitos anos no comércio da cidade, construindo relações de confiança e amizade com suas clientes.</p><p>Quando deixou seu antigo trabalho, ela e sua filha transformaram essa experiência em algo próprio. Compraram uma loja, repaginaram completamente o espaço e, em março de 2026, nasceu a Eme gê modas.</p><p>Uma loja renovada, elegante, acolhedora e completa — feita para Espigão Alto do Iguaçu e toda a região.</p></div><p className="mt-10 border-l border-gold pl-5 font-display text-2xl italic leading-snug">“Porque uma loja pode mudar. Um ambiente pode crescer. Mas confiança é algo que se constrói com o tempo.”</p></Reveal>
+        <div className="container footer-wordmark">
+          <Wordmark footer />
+          <p>
+            Porque se amar
+            <br />é o seu melhor look.
+          </p>
         </div>
-      </section>
-
-      <section id="visite" className="relative min-h-[80vh] overflow-hidden bg-wine text-primary-foreground">
-        <img src={denimLookAsset.url} alt="Look Eme gê modas" loading="lazy" className="absolute inset-0 h-full w-full object-cover object-center opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-r from-wine via-wine/80 to-transparent" />
-        <Reveal className="relative z-10 mx-auto flex min-h-[80vh] max-w-[1380px] flex-col justify-center px-5 py-24 sm:px-10 lg:px-16">
-          <p className="text-[0.65rem] tracking-[0.22em] text-blush-soft">SEU PRÓXIMO LOOK</p><h2 className="mt-4 max-w-4xl font-display text-5xl leading-none sm:text-7xl lg:text-8xl">Pode estar esperando por você.</h2>
-          <div className="mt-8 max-w-2xl border-l border-gold pl-5"><p className="font-display text-4xl text-blush-soft">20% OFF na primeira compra</p><p className="mt-3 text-sm font-light leading-7 text-primary-foreground/75">Ao visitar nossa loja, diga que veio pela landing page e ganhe 20% OFF na sua primeira compra.</p></div>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row"><Button asChild variant="cream" size="editorial"><a href={whatsapp("Olá! Conheci a Eme gê pela landing page e quero aproveitar 20% OFF na minha primeira compra.")} target="_blank" rel="noreferrer">QUERO CONHECER A EME GÊ</a></Button><Button asChild variant="editorialOutline" size="editorial"><a href={whatsapp("Olá! Quero conversar com a Eme gê.")} target="_blank" rel="noreferrer">FALAR PELO WHATSAPP</a></Button></div>
-          <p className="mt-12 font-display text-2xl italic">Porque se amar é o seu melhor look.</p>
-        </Reveal>
-      </section>
-
-      <footer className="bg-foreground px-5 py-14 text-background sm:px-10 lg:px-16">
-        <div className="mx-auto grid max-w-[1380px] gap-10 md:grid-cols-3 md:items-end"><div><img src={logoAsset.url} alt="Eme gê modas" className="h-20 w-20 rounded-full object-cover" /><p className="mt-4 text-xs tracking-[0.18em] text-background/60">MODA · CALÇADOS · JOIAS · BELEZA</p></div><address className="not-italic text-sm leading-7 text-background/70"><strong className="text-background">Eme gê modas</strong><br />Av. Brasília, 535 - Centro<br />Espigão Alto do Iguaçu - PR<br />WhatsApp: (46) 9 9930-2444</address><div className="flex gap-3 md:justify-end"><Button asChild variant="cream" size="icon"><a href="https://www.instagram.com/emege.modas" target="_blank" rel="noreferrer" aria-label="Instagram da Eme gê"><Instagram /></a></Button><Button asChild variant="cream" size="icon"><a href={whatsapp("Olá! Vim pelo site da Eme gê.")} target="_blank" rel="noreferrer" aria-label="WhatsApp da Eme gê"><MessageCircle /></a></Button><Button asChild variant="cream" size="icon"><a href="https://www.google.com/maps/search/?api=1&query=Av.+Brasília,+535,+Espigão+Alto+do+Iguaçu,+PR" target="_blank" rel="noreferrer" aria-label="Como chegar à Eme gê"><MapPin /></a></Button></div></div>
+        <div className="container footer-bottom">
+          <span>Eme gê modas · Espigão Alto do Iguaçu, PR</span>
+          <a href={store.hello} target="_blank" rel="noopener noreferrer">
+            (46) 9 9930-2444
+          </a>
+          <MotionControl paused={paused} onToggle={() => setPaused((value) => !value)} />
+        </div>
       </footer>
-
-      <Button asChild variant="editorial" className="whatsapp-float fixed bottom-4 right-4 z-50 rounded-full px-4 shadow-editorial sm:bottom-6 sm:right-6" aria-label="Falar com a Eme gê no WhatsApp"><a href={whatsapp("Olá! Quero conhecer a Eme gê.")} target="_blank" rel="noreferrer"><MessageCircle /><span className="hidden sm:inline">FALAR COM A EME GÊ</span></a></Button>
-    </main>
+      <a
+        className="floating-contact"
+        href={store.hello}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Falar com a Eme gê pelo WhatsApp"
+      >
+        <MessageCircle size={22} />
+        <span>
+          Vamos encontrar
+          <br />
+          <strong>o seu próximo look?</strong>
+        </span>
+        <ArrowUpRight size={17} />
+      </a>
+      <LookDialog selection={selection} onChange={setSelection} />
+    </div>
   );
 }
